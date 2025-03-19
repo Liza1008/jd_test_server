@@ -45,11 +45,15 @@ jobs:
         
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
     
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition jd-test-server-test > task-definition.json
+
     - name: Modify task definition
       id: modify-task
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: jd-test-server-test
+        task-definition: task-definition.json
         container-name: jd-test-server-test
         image: ${{ steps.build-image.outputs.image }}
 
