@@ -60,9 +60,23 @@ jobs:
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
+      id: ecs-deploy
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
       with:
         task-definition: ${{ steps.modify-task.outputs.task-definition }}
         service: jd-test-server-test-service
         cluster: jd-test-server-test-cluster
         wait-for-service-stability: true
+
+    - name: Check if deployment was successful
+      id: check-deployment
+      run: |
+        CURRENT_TASK_DEF_ARN=$(aws ecs describe-services --cluster jd-test-server-test-cluster --services jd-test-server-test-service --query services[0].deployments[0].taskDefinition | jq -r ".")
+        NEW_TASK_DEF_ARN=${{ steps.ecs-deploy.outputs.task-definition-arn }}
+        echo "Current task arn: $CURRENT_TASK_DEF_ARN"
+        echo "New task arn: $NEW_TASK_DEF_ARN"
+        if [ "$CURRENT_TASK_DEF_ARN" != "$NEW_TASK_DEF_ARN" ]; then
+          FAILED_TASK_REASON=$(aws ecs describe-tasks --cluster jd-test-server-test-cluster --tasks arn:aws:ecs:eu-west-3:955549159979:task/jd-test-server-test-cluster/3a49452239244412a0111d3748b50ee0 --query 'tasks[].containers[].reason' --output text)
+          echo 'Deployment failed. "$FAILED_TASK_REASON"'
+          exit 1
+        fi
