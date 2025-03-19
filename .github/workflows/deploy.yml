@@ -31,6 +31,7 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         docker buildx create --use
         
@@ -38,7 +39,25 @@ jobs:
           --cache-from type=gha \
           --cache-to type=gha,mode=max \
           --platform linux/amd64 \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           --push \
           .
+        
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+    
+    - name: Modify task definition
+      id: modify-task
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: jd-test-server-test
+        container-name: jd-test-server-test
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.modify-task.outputs.task-definition }}
+        service: jd-test-server-test-service
+        cluster: jd-test-server-test-cluster
+        wait-for-service-stability: true
+        rollback-on-failure: true
