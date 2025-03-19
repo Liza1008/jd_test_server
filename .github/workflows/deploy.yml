@@ -44,7 +44,7 @@ jobs:
           --push \
           .
         
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     
     - name: Download task definition
       id: download-task-def
@@ -76,7 +76,6 @@ jobs:
         echo "Current task arn: $CURRENT_TASK_DEF_ARN"
         echo "New task arn: $NEW_TASK_DEF_ARN"
         if [ "$CURRENT_TASK_DEF_ARN" != "$NEW_TASK_DEF_ARN" ]; then
-          FAILED_TASK_REASON=$(aws ecs describe-tasks --cluster jd-test-server-test-cluster --tasks arn:aws:ecs:eu-west-3:955549159979:task/jd-test-server-test-cluster/3a49452239244412a0111d3748b50ee0 --query 'tasks[].containers[].reason' --output text)
-          echo 'Deployment failed. "$FAILED_TASK_REASON"'
+          echo 'Deployment failed.'
           exit 1
         fi
