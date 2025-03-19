@@ -3,6 +3,7 @@ name: Deploy to AWS ECS
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   ECR_REPOSITORY: jd-test-server-test
@@ -65,4 +66,3 @@ jobs:
         service: jd-test-server-test-service
         cluster: jd-test-server-test-cluster
         wait-for-service-stability: true
-        
