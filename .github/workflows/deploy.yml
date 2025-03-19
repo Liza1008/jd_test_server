@@ -65,4 +65,4 @@ jobs:
         service: jd-test-server-test-service
         cluster: jd-test-server-test-cluster
         wait-for-service-stability: true
-        rollback-on-failure: true
+        
